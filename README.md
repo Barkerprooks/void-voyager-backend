@@ -33,3 +33,16 @@ project you only need to run this command
 ```
 flask run
 ```
+
+## Virtual Environment
+
+When done, you can deactivate the python environment using the command
+
+```
+deactivate
+```
+
+When returning to the project make sure to re-activate the environment by running
+```
+source ./env/bin/activate
+```
