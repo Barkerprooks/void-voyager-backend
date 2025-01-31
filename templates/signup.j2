@@ -1,0 +1,10 @@
+{% extends "layout.j2" %}
+{% block body %}
+
+<form action="/signup" method="post">
+    <input name="username" placeholder="username" />
+    <input name="password" placeholder="password" type="password" />
+    <input type="submit" />
+</form>
+
+{% endblock %}
