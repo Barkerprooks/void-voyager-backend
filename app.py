@@ -1,13 +1,33 @@
 from flask import Flask, Response, request, session, render_template, jsonify
-from hashlib import sha3_256
 from os import urandom
 from json import load
 from os.path import isfile, realpath
 
 import db
 
-app = Flask(__name__)
-app.config.from_file("./default-config.json", load=load)
+# prefer local first
+SETTINGS_PATHS: list[str] = [
+    "./settings.json",
+    "./etc/settings.json",
+    "/etc/void-voyager/settings.json",
+    "/etc/void-voyager-backend/settings.json",
+]
+
+# dynamically pull in the most relevent settings file
+valid_settings_paths: list[str] = [path for path in SETTINGS_PATHS if isfile(path)]
+
+if not valid_settings_paths:
+    print(" X error: could not locate `settings.json` valid locations are:")
+    for path in SETTINGS_PATHS:
+        print(path)
+    exit(0)
+
+settings_path: str = valid_settings_paths[0]
+
+
+# setup the app
+app: Flask = Flask(__name__)
+app.config.from_file(settings_path, load=load)
 
 
 # initialize the database if it does not exist yet
@@ -18,7 +38,7 @@ def create_database():
 
 # check to see if our database exists yet
 with app.app_context():
-    db_sqlite_path = app.config["DB_SQLITE_PATH"]
+    db_sqlite_path: str = app.config["DB_SQLITE_PATH"]
     if not isfile(db_sqlite_path):
         print(f" ! Creating database '{realpath(db_sqlite_path)}'")
         db.load_schema(app)  # create it if it's not there yet
@@ -35,46 +55,75 @@ app.secret_key = urandom(32)
 # most of the functionality is behind a JSON API
 # pretty much every /api endpoint does a thing and returns JSON
 
+def json_response(data: dict[str, str] = {}) -> Response:
+    if not data:
+        return jsonify({"status": True})
+    return jsonify({"status": True, "data": data})
+
+
+def json_error(status_code: int = 500) -> Response:
+    return jsonify({"status": False}), status_code
+
+# --------------------------------------------------------------------------------------
+# API GET requests
+# --------------------------------------------------------------------------------------
 
 # query logged in user
 @app.get("/api/account")
 def account() -> Response:
-    if not (user_id := session.get("user_id")):
-        return jsonify({"status": False})
+    if not (userid := session.get("userid")):
+        return json_error(401) # not logged in
 
-    user: db.User | None = db.get_user(app, user_id)
+    user: db.User | None = db.get_user_by_id(app, userid)
 
-    return jsonify(
-        {
-            "status": True,
-            "data": {
-                "username": user.username,
-                "password": user.password,
-            },
-        }
-    )
+    if not user:
+        del session['userid'] # could not find user for some reason, remove bad ID
+        return json_error(404) # user does not exist
 
+    return json_response(user.get_data(app))
 
-@app.post("/api/login")
-def login() -> Response:
-    username: str = request.form["username"]
-    password: str = request.form["password"]
-
-    return jsonify({"status": True})
-
+# --------------------------------------------------------------------------------------
+# API POST requests
+# --------------------------------------------------------------------------------------
 
 # create a user row
 @app.post("/api/signup")
 def signup() -> Response:
-    username: str = request.form["username"]
-    password: str = request.form["password"]
+    username: str = request.json["username"]
+    password: str = request.json["password"]
 
-    hashed_password: str = sha3_256(password.encode("utf-8")).hexdigest()
+    if userid := db.create_user(app, username, password):
+        session['userid'] = userid # login after creation
+        return json_response({"userid": userid})
 
-    db.add_user(app, username, hashed_password)
+    return json_error(500)
 
-    return jsonify({"status": True})
 
+# map user to a new session
+@app.post("/api/login")
+def login() -> Response:
+    username: str = request.json["username"]
+    password: str = request.json["password"]
+
+    if userid := db.check_user_password(app, username, password):
+        session['userid'] = userid
+        return json_response()
+    
+    return json_error(401)
+
+
+# post request to make sure they really intend to log out
+@app.post("/api/logout")
+def logout() -> Response:
+    if 'userid' in session:
+        del session['userid']
+        return json_response()
+    
+    return json_error(500) # weird
+
+# --------------------------------------------------------------------------------------
+# WEB INTERFACE
+# --------------------------------------------------------------------------------------
 
 # static web pages
 @app.get("/")
