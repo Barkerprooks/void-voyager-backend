@@ -33,7 +33,7 @@ def add_user(app: Flask, username: str, password: str) -> None:
     get_connection(app).execute("INSERT INTO user VALUES (?, ?)", (username, password))
 
 
-def get_user(app: Flask, user_id: int) -> User | None:
+def get_user_by_id(app: Flask, user_id: int) -> User | None:
     if (
         row := (
             get_connection(app)
@@ -45,6 +45,13 @@ def get_user(app: Flask, user_id: int) -> User | None:
 
     username, password = row
     return User(username, password)
+
+
+def get_user_by_username(app: Flask, username: str) -> User | None: ...
+
+
+def user_login(app: Flask, username: str, password: str) -> bool:
+    user: User = get_user_by_username(app, username)
 
 
 def add_user_market(app: Flask, user: int, market: int) -> None:

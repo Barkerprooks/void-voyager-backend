@@ -1,4 +1,4 @@
-from flask import Flask, Response, g, request, render_template, jsonify
+from flask import Flask, Response, request, session, render_template, jsonify
 from hashlib import sha3_256
 from os import urandom
 from json import load
@@ -36,47 +36,13 @@ app.secret_key = urandom(32)
 # pretty much every /api endpoint does a thing and returns JSON
 
 
-# main index API point
-@app.get("/api")
-def index() -> Response:
-    return jsonify(
-        {
-            "response format": {
-                "status": {
-                    "type": "boolean",
-                    "description": "if the request was successful or not",
-                },
-                "data": {
-                    "type": "list | dict",
-                    "description": "requested data if relevant",
-                },
-            },
-            "help": [
-                {
-                    "description": "create a user account",
-                    "endpoint": "/api/signup",
-                    "method": "POST",
-                    "parameters": [
-                        {"name": "username", "type": "string"},
-                        {"name": "password", "type": "string"},
-                    ],
-                },
-                {
-                    "description": "query a user account based on its user ID",
-                    "endpoint": "/api/account/<User ID>",
-                    "method": "GET",
-                },
-            ],
-        }
-    )
-
-
-# query user account by ID
-@app.get("/api/account/<int:user_id>")
-def account(user_id: int) -> Response:
-    user: db.User | None = db.get_user(app, user_id)
-    if not user:
+# query logged in user
+@app.get("/api/account")
+def account() -> Response:
+    if not (user_id := session.get("user_id")):
         return jsonify({"status": False})
+
+    user: db.User | None = db.get_user(app, user_id)
 
     return jsonify(
         {
@@ -87,6 +53,14 @@ def account(user_id: int) -> Response:
             },
         }
     )
+
+
+@app.post("/api/login")
+def login() -> Response:
+    username: str = request.form["username"]
+    password: str = request.form["password"]
+
+    return jsonify({"status": True})
 
 
 # create a user row
