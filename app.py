@@ -3,6 +3,7 @@ from os import urandom
 from json import load
 from os.path import isfile, realpath
 
+from models.user import User
 import db
 
 # prefer local first
@@ -30,18 +31,14 @@ app: Flask = Flask(__name__)
 app.config.from_file(settings_path, load=load)
 
 
-# initialize the database if it does not exist yet
+# command to initialize the database if it does not exist yet
 @app.cli.command("create-database")
 def create_database():
-    db.load_schema(app)
+    if db.load_schema(app):
+        print(" * database created")
+    else:
+        print(" X error: could not find schema file")
 
-
-# check to see if our database exists yet
-with app.app_context():
-    db_sqlite_path: str = app.config["DB_SQLITE_PATH"]
-    if not isfile(db_sqlite_path):
-        print(f" ! Creating database '{realpath(db_sqlite_path)}'")
-        db.load_schema(app)  # create it if it's not there yet
 
 # make sure the database is found and properly closed
 app.teardown_appcontext(db.close_connection)
@@ -55,6 +52,7 @@ app.secret_key = urandom(32)
 # most of the functionality is behind a JSON API
 # pretty much every /api endpoint does a thing and returns JSON
 
+
 def json_response(data: dict[str, str] = {}) -> Response:
     if not data:
         return jsonify({"status": True})
@@ -64,27 +62,31 @@ def json_response(data: dict[str, str] = {}) -> Response:
 def json_error(status_code: int = 500) -> Response:
     return jsonify({"status": False}), status_code
 
+
 # --------------------------------------------------------------------------------------
 # API GET requests
 # --------------------------------------------------------------------------------------
+
 
 # query logged in user
 @app.get("/api/account")
 def account() -> Response:
     if not (userid := session.get("userid")):
-        return json_error(401) # not logged in
+        return json_error(401)  # not logged in
 
-    user: db.User | None = db.get_user_by_id(app, userid)
+    user: db.User | None = User.get_user_by_id(app, userid)
 
     if not user:
-        del session['userid'] # could not find user for some reason, remove bad ID
-        return json_error(404) # user does not exist
+        del session["userid"]  # could not find user for some reason, remove bad ID
+        return json_error(404)  # user does not exist
 
     return json_response(user.get_data(app))
+
 
 # --------------------------------------------------------------------------------------
 # API POST requests
 # --------------------------------------------------------------------------------------
+
 
 # create a user row
 @app.post("/api/signup")
@@ -92,9 +94,9 @@ def signup() -> Response:
     username: str = request.json["username"]
     password: str = request.json["password"]
 
-    if userid := db.create_user(app, username, password):
-        session['userid'] = userid # login after creation
-        return json_response({"userid": userid})
+    if user := User.create_user(app, username, password):
+        session["userid"] = user.userid  # login after creation
+        return json_response({"userid": user.userid})
 
     return json_error(500)
 
@@ -105,25 +107,29 @@ def login() -> Response:
     username: str = request.json["username"]
     password: str = request.json["password"]
 
-    if userid := db.check_user_password(app, username, password):
-        session['userid'] = userid
+    user: User = User.get_by_username(app, username)
+
+    if user.password == User.hash(password):
+        session["userid"] = user.userid
         return json_response()
-    
+
     return json_error(401)
 
 
 # post request to make sure they really intend to log out
 @app.post("/api/logout")
 def logout() -> Response:
-    if 'userid' in session:
-        del session['userid']
+    if "userid" in session:
+        del session["userid"]
         return json_response()
-    
-    return json_error(500) # weird
+
+    return json_error(500)  # weird if it gets here but whatever
+
 
 # --------------------------------------------------------------------------------------
 # WEB INTERFACE
 # --------------------------------------------------------------------------------------
+
 
 # static web pages
 @app.get("/")
