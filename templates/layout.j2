@@ -7,6 +7,15 @@
         {% block preloadscripts %}{% endblock %}
     </head>
     <body>
+        <nav>
+            {% if user %}
+                <h1>hello, {{ user.username }}</h1>
+                <a href="/account">my account</a>
+            {% else %}
+                <a href="/signup">sign up</a>            
+                <a href="/login">log in</a>
+            {% endif %}
+        </nav>
         {% block body %}{% endblock %}
         {% block scripts %}{% endblock %}    
     </body>

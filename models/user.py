@@ -24,7 +24,7 @@ class User:
     def get_by_userid(cls, app: Flask, userid: int) -> Self | None:
         if row := database(app).execute(cls.userid_query, [userid]).fetchone():
             username, password = row
-            return User(userid, username, password)
+            return Self(userid, username, password)
 
     @classmethod
     def get_by_username(cls, app: Flask, username: str) -> Self | None:

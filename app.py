@@ -135,10 +135,15 @@ def logout() -> Response:
 @app.get("/")
 @app.get("/<page>")
 def web(page: str = "") -> Response:
-    match page:
-        case "signup":
-            return render_template("signup.j2")
-        case "account":
-            return render_template("account.j2")
+    user: User = User.get_by_userid(app, session.get("userid"))
+    template: str = "index.j2"
 
-    return render_template("index.j2")
+    match page:
+        case "login":
+            template = "login.j2"
+        case "signup":
+            template = "signup.j2"
+        case "account":
+            template = "account.j2"
+
+    return render_template(template, user=user)
