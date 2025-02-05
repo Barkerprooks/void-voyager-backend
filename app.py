@@ -2,6 +2,7 @@ from flask import Flask, Response, request, session, render_template, jsonify
 from os import urandom
 from json import load
 from os.path import isfile, realpath
+from werkzeug.exceptions import BadRequest
 
 from models.user import User
 import db
@@ -91,8 +92,11 @@ def account() -> Response:
 # create a user row
 @app.post("/api/signup")
 def signup() -> Response:
-    username: str = request.json["username"]
-    password: str = request.json["password"]
+    try:
+        username: str = request.json["username"]
+        password: str = request.json["password"]
+    except (KeyError, BadRequest):
+        return json_error(400)
 
     if user := User.create_user(app, username, password):
         session["userid"] = user.userid  # login after creation
@@ -104,8 +108,11 @@ def signup() -> Response:
 # map user to a new session
 @app.post("/api/login")
 def login() -> Response:
-    username: str = request.json["username"]
-    password: str = request.json["password"]
+    try:
+        username: str = request.json["username"]
+        password: str = request.json["password"]
+    except (KeyError, BadRequest):
+        return json_error(400)
 
     user: User = User.get_by_username(app, username)
 

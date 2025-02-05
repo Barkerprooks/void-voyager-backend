@@ -41,7 +41,7 @@ class User:
             ).fetchone()
             connection.commit()  # save the new user on creation
 
-            return cls.get_by_userid(userid)  # should be in there now
+            return cls.get_by_userid(app, userid)  # should be in there now
         except IntegrityError:  # user tried to insert an identical username
             ...
         return None  # not a valid ID in the table
