@@ -1,14 +1,27 @@
 {% extends "layout.j2" %}
 
+{% block styles %}
+<link rel="stylesheet" href="/static/css/dashboard.css" />
+{% endblock %}
+
 {% block body %}
-<div>
-    <h3>{{ data["username"] }} ID#{{ data["id"] }}</h3>
-    
-    <h4>available markets</h4>
-    <ol>
-        {% for market in markets %}
-            <li>{{ market }}</li>
-        {% endfor %}
-    </ol>
+<div id="user-page">
+    <h2>{{ data["username"] }} <code>{{ data["id"] }}</code></h2>
+
+    <div id="user-details">
+        <h4><a href="#">[+]</a> ships</h4>
+        <ol>
+            {% for ship in ships %}
+                <li>{{ ship }}</li>
+            {% endfor %}
+        </ol>
+        
+        <h4><a href="#">[+]</a> markets</h4>
+        <ol>
+            {% for market in markets %}
+                <li>{{ market }}</li>
+            {% endfor %}
+        </ol>
+    </div>
 </div>
 {% endblock %}

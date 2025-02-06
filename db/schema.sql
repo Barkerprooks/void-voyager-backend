@@ -25,6 +25,15 @@ create table if not exists `user` (
     `password` varchar(80) -- MAKE SURE TO HASH :)
 );
 
+-- ships that can belong to users
+create table if not exists `ship` (
+    `id` integer primary key,
+    `name` varchar(80) not null,
+    `type` varchar(80) not null,
+    `user` integer, -- nullable
+    foreign key (`user`) references `user` (`id`)
+);
+
 -- market / curreny mapping
 create table if not exists `market_currency` (
     `market` integer not null,

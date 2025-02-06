@@ -1,7 +1,7 @@
-from flask import Flask, Response, request, session, render_template, jsonify
+from flask import Flask, Response, request, redirect, session, render_template, jsonify
 from os import urandom
 from json import load
-from os.path import isfile, realpath
+from os.path import isfile
 from werkzeug.exceptions import BadRequest
 
 from typing import Any
@@ -156,8 +156,11 @@ def web(page: str = "") -> Response:
         case "logout":  # just render the index but without a user id to query
             if "userid" in session:
                 del session["userid"]
+            return redirect("/")
         case "dashboard":  # make sure the user has a session ID before showing them
-            template = "dashboard.j2" if session.get("userid") else "index.j2"
+            if not session.get("userid"):
+                return redirect("/")
+            template = "dashboard.j2"
 
     user: User = User.get_by_userid(app, session.get("userid"))
     data: dict[str, Any] = user.get_public_data(app) if user else {}

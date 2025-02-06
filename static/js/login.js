@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const error = document.querySelector('.error');
     const form = document.querySelector('form');
+    const submit = document.querySelector('input[type=submit]');
 
     form.addEventListener('submit', (event) => {
         const formData = new FormData(form);

@@ -11,7 +11,7 @@ form {
     padding: 16px;
     margin: 42px auto;
 
-    width: 50%;
+    width: 42%;
 
     border: 1px solid grey;
     border-radius: 5px;
@@ -29,7 +29,7 @@ form h2 {
 }
 
 form input {
-    width: 50%;
+    width: 42%;
     margin: 8px auto;
     padding: 8px;
 }

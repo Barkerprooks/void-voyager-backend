@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.querySelector('input[name=username]');
     const password = document.querySelector('input[name=password]');
 
+    submit.disabled = true;
+
     inputs.forEach(input => {
         input.onkeyup = () => {
             errors = []; 
