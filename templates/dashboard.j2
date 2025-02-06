@@ -1,0 +1,14 @@
+{% extends "layout.j2" %}
+
+{% block body %}
+<div>
+    <h3>{{ data["username"] }} ID#{{ data["id"] }}</h3>
+    
+    <h4>available markets</h4>
+    <ol>
+        {% for market in markets %}
+            <li>{{ market }}</li>
+        {% endfor %}
+    </ol>
+</div>
+{% endblock %}

@@ -9,13 +9,16 @@
     </head>
     <body>
         <nav>
-            {% if user %}
-                <h1>hello, {{ user.username }}</h1>
-                <a href="/account">my account</a>
-            {% else %}
-                <a href="/signup">sign up</a>            
-                <a href="/login">log in</a>
-            {% endif %}
+            <a href="/">Void Voyager: Ansible</a>
+            <div class="woah">
+                {% if data %}
+                    <a href="/dashboard">dashboard</a>
+                    <a href="/logout">log out</a>
+                {% else %}
+                    <a href="/signup">sign up</a>            
+                    <a href="/login">log in</a>
+                {% endif %}
+            </div>
         </nav>
         {% block body %}{% endblock %}
         {% block scripts %}{% endblock %}    

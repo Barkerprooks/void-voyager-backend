@@ -1,9 +1,23 @@
 {% extends "layout.j2" %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/accounts.css" />
+{% endblock %}
+
 {% block body %}
 <form>
-    <input name="username" placeholder="username"/>
-    <input name="password" placeholder="password" type="passsword"/>
+    <h2>log in to your <i>Void Voyager: Ansible</i> account</h2>
 
+    <input name="username" placeholder="username"/>
+    <input name="password" placeholder="password" type="password"/>
+    
+    <p class="error"></p>
     <input type="submit" value="log in" />
+
+    <a href="/signup">dont have an account? sign up for one here</a>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/login.js"></script>
 {% endblock %}

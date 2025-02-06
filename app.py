@@ -4,6 +4,8 @@ from json import load
 from os.path import isfile, realpath
 from werkzeug.exceptions import BadRequest
 
+from typing import Any
+
 from models.user import User
 import db
 
@@ -102,7 +104,7 @@ def signup() -> Response:
         session["userid"] = user.userid  # login after creation
         return json_response({"userid": user.userid})
 
-    return json_error(500)
+    return json_error(403)  # user already exists
 
 
 # map user to a new session
@@ -116,7 +118,7 @@ def login() -> Response:
 
     user: User = User.get_by_username(app, username)
 
-    if user.password == User.hash(password):
+    if user and user.password == User.hash(password):
         session["userid"] = user.userid
         return json_response()
 
@@ -142,15 +144,22 @@ def logout() -> Response:
 @app.get("/")
 @app.get("/<page>")
 def web(page: str = "") -> Response:
-    user: User = User.get_by_userid(app, session.get("userid"))
     template: str = "index.j2"
 
     match page:
+        # account management
         case "login":
             template = "login.j2"
         case "signup":
             template = "signup.j2"
-        case "account":
-            template = "account.j2"
+        # authenticated endpoints
+        case "logout":  # just render the index but without a user id to query
+            if "userid" in session:
+                del session["userid"]
+        case "dashboard":  # make sure the user has a session ID before showing them
+            template = "dashboard.j2" if session.get("userid") else "index.j2"
 
-    return render_template(template, user=user)
+    user: User = User.get_by_userid(app, session.get("userid"))
+    data: dict[str, Any] = user.get_public_data(app) if user else {}
+
+    return render_template(template, data=data)

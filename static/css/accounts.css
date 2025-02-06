@@ -1,0 +1,42 @@
+.error {
+    font-weight: bold;
+    text-align: center;
+    color: red;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+
+    padding: 16px;
+    margin: 42px auto;
+
+    width: 50%;
+
+    border: 1px solid grey;
+    border-radius: 5px;
+}
+
+form a {
+    width: fit-content;
+    display: block;
+    margin-left: auto;
+}
+
+form h2 {
+    font-family: Arial, Helvetica, sans-serif;
+    margin-bottom: 24px;
+}
+
+form input {
+    width: 50%;
+    margin: 8px auto;
+    padding: 8px;
+}
+
+form input[type=submit] {
+    cursor: pointer;
+    margin: 16px auto;
+    padding: 4px 8px;
+    width: fit-content;
+}

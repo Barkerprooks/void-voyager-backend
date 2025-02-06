@@ -47,6 +47,7 @@ create table if not exists `market_good` (
 create table if not exists `user_market` (
     `user` integer not null,
     `market` integer not null,
+    `stake` integer not null, -- how much ownership the user has over the market
     foreign key (`user`) references `user` (`id`),
     foreign key (`market`) references `market` (`id`)
 );

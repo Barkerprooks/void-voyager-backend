@@ -1,4 +1,11 @@
 {% extends "layout.j2" %}
 {% block body %}
-<small>hello world</small>
+
+{% if data %}
+    <center>welcome to your little corner of the galaxy</center>
+{% else %}
+    <center>instantaneous intergalactic communication</center>
+{% endif %}
+
+
 {% endblock %}

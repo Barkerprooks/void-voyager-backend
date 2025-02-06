@@ -2,23 +2,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const error = document.querySelector('.error');
     const form = document.querySelector('form');
 
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', (event) => {
         const formData = new FormData(form);
 
         fetch('/api/login', {
-            headers: { 'Content-Type': 'application/json' },
             method: "POST",
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: formData.get('username'),
                 password: formData.get('password')
             })
         }).then(async response => {
-            if (response.status == 400) {
-                error.innerText = "invalid request";
-            } else if (response.status == 500) {
-                error.innerText = "passwords do not match";
-            } else {
-                window.location = '/'; // send new user to home page
+            switch (response.status) {
+                case 401:
+                    error.innerText = "username or password does not exist";
+                    break;
+                case 400:
+                case 500:
+                    error.innerText = "fatal error, try again later";
+                    break;
+                default: // 200-300
+                    window.location = '/';
             }
         });
 

@@ -24,21 +24,24 @@ class User:
     def get_by_userid(cls, app: Flask, userid: int) -> Self | None:
         if row := database(app).execute(cls.userid_query, [userid]).fetchone():
             username, password = row
-            return Self(userid, username, password)
+            return User(userid, username, password)
 
     @classmethod
     def get_by_username(cls, app: Flask, username: str) -> Self | None:
         if row := database(app).execute(cls.username_query, [username]).fetchone():
             userid, password = row
-            return Self(userid, username, password)
+            return User(userid, username, password)
 
     @classmethod
     def create_user(cls, app: Flask, username: str, password: str) -> Self | None:
+        if not username or not password:
+            return None  # usernames and passwords need to be valid
+
         try:
             connection = database(app)
             userid = connection.execute(
                 User.create_new, [username, cls.hash(password)]
-            ).fetchone()
+            ).fetchone()[0]  # returns a tuple. need to de-sugar the id returned
             connection.commit()  # save the new user on creation
 
             return cls.get_by_userid(app, userid)  # should be in there now
@@ -52,12 +55,11 @@ class User:
         self.password: str = password  # should be hashed before it gets here
 
     def __markets(self, app: Flask) -> list[int]:
-        return database(app).execute(self.select_markets, [self.userid]).fetchall()
+        return database(app).execute(self.markets_query, [self.userid]).fetchall()
 
-    def get_data(self, app: Flask) -> dict[str, str]:
+    def get_public_data(self, app: Flask) -> dict[str, str]:
         return {
             "id": str(self.userid),
             "username": self.username,
-            "password": self.password,
             "markets": self.__markets(app),
         }
