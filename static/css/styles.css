@@ -1,15 +1,14 @@
 * {
     box-sizing: border-box;
+    text-decoration: none;
     padding: 0;
     margin: 0;
-    text-decoration: none;
 }
 
 nav {
-    font-family: Arial;
-    border: 1px solid black;
-    display: flex;
     justify-content: space-between;
+    font-family: Arial;
+    display: flex;
 }
 
 nav a {

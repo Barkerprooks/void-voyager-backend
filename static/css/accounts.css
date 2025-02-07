@@ -35,8 +35,8 @@ form input {
 }
 
 form input[type=submit] {
+    width: fit-content;
     cursor: pointer;
     margin: 16px auto;
     padding: 4px 8px;
-    width: fit-content;
 }

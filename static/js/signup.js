@@ -25,7 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     submit.disabled = true;
 
     inputs.forEach(input => {
-        input.onkeyup = () => {
+        input.onkeyup = (event) => {
+            if(event.key == 'Enter')
+                return;
+
             errors = []; 
         
             errors = errors.concat(validateField(username, {min: 3, max: 80}));
@@ -56,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     error.innerText = "fatal error, try again later";
                     break;
                 default: // 200-300
-                    window.location = '/';
+                    window.location = '/dashboard';
             }
         });
 

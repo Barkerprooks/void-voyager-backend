@@ -3,6 +3,7 @@ from os import urandom
 from json import load
 from os.path import isfile
 from werkzeug.exceptions import BadRequest
+from getpass import getpass
 
 from typing import Any
 
@@ -43,6 +44,30 @@ def create_database():
         print(" X error: could not find schema file")
 
 
+@app.cli.command('create-user')
+def create_user(username: str = "", password: str = ""):
+
+    if not username:
+        username = input('enter username: ')
+
+    if not password:
+        password = getpass('enter password: ')
+
+    User.create(app, username, password, False)
+
+
+@app.cli.command('create-admin')
+def create_admin(username: str = "", password: str = ""):
+
+    if not username:
+        username = input('enter admin username: ')
+
+    if not password:
+        password = getpass('enter admin password: ')
+
+    User.create(app, username, password, True)
+
+
 # make sure the database is found and properly closed
 app.teardown_appcontext(db.close_connection)
 
@@ -77,7 +102,7 @@ def account() -> Response:
     if not (userid := session.get("userid")):
         return json_error(401)  # not logged in
 
-    user: db.User | None = User.get_user_by_id(app, userid)
+    user: db.User | None = User.get_by_uid(app, userid)
 
     if not user:
         del session["userid"]  # could not find user for some reason, remove bad ID
@@ -100,9 +125,9 @@ def signup() -> Response:
     except (KeyError, BadRequest):
         return json_error(400)
 
-    if user := User.create_user(app, username, password):
-        session["userid"] = user.userid  # login after creation
-        return json_response({"userid": user.userid})
+    if user := User.create(app, username, password):
+        session["userid"] = user.uid  # login after creation
+        return json_response({"id": user.uid})
 
     return json_error(403)  # user already exists
 
@@ -119,7 +144,7 @@ def login() -> Response:
     user: User = User.get_by_username(app, username)
 
     if user and user.password == User.hash(password):
-        session["userid"] = user.userid
+        session["userid"] = user.uid
         return json_response()
 
     return json_error(401)
@@ -162,7 +187,7 @@ def web(page: str = "") -> Response:
                 return redirect("/")
             template = "dashboard.j2"
 
-    user: User = User.get_by_userid(app, session.get("userid"))
+    user: User = User.get_by_uid(app, session.get("userid"))
     data: dict[str, Any] = user.get_public_data(app) if user else {}
 
     return render_template(template, data=data)

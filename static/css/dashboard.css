@@ -9,3 +9,8 @@
 #user-details {
     padding: 24px;
 }
+
+#uesr-details button {
+    background: none;
+    border: none;
+}

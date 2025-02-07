@@ -1,62 +1,45 @@
--- collection of places to sell things
-create table if not exists `market` (
-    `id` integer primary key,
-    `name` varchar(80) unique not null
-);
-
--- ways to pay
-create table if not exists `currency` (
-    `id` integer primary key,
-    `name` varchar(80) unique not null,
-    `rate` integer not null
-);
-
--- collection of things to sell
-create table if not exists `good` (
-    `id` integer primary key,
-    `name` varchar(120) unique not null,
-    `msrp` integer not null -- default price of the item
-);
-
--- basically users
+-- all users that exist
 create table if not exists `user` (
     `id` integer primary key,
     `username` varchar(80) unique,
-    `password` varchar(80) -- MAKE SURE TO HASH :)
+    `password` varchar(80), -- MAKE SURE TO HASH :)
+    `is_admin` boolean
 );
 
--- ships that can belong to users
-create table if not exists `ship` (
+-- all incorperations that exist
+create table if not exists `incorperation` (
     `id` integer primary key,
-    `name` varchar(80) not null,
-    `type` varchar(80) not null,
-    `user` integer, -- nullable
+    `name` varchar(80) unique not null,
+    `user` integer not null,
     foreign key (`user`) references `user` (`id`)
 );
 
--- market / curreny mapping
-create table if not exists `market_currency` (
-    `market` integer not null,
-    `currency` integer not null,
-    foreign key (`market`) references `market` (`id`),
-    foreign key (`currency`) references `currency` (`id`)
+-- all markets that exist
+create table if not exists `market` (
+    `id` integer primary key,
+    `name` varchar(80) not null,
+    `incorperation` integer not null, -- each market must come from
+    foreign key (`incorperation`) references `incorperation` (`id`)
 );
 
--- market / good mapping
-create table if not exists `market_good` (
-    `price` integer not null, -- final price of the item
-    `count` integer not null, -- number of items in the inventory
-    `market` integer not null,
-    `good` integer not null,
-    foreign key (`market`) references `market` (`id`),
-    foreign key (`good`) references `good` (`id`)
+-- all goods that exist
+create table if not exists `good` (
+    `id` integer primary key,
+    `name` varchar(120) unique not null,
+    `cost` integer not null -- default price of the item
 );
 
--- users can own multiple markets
-create table if not exists `user_market` (
+-- all ship types that exist
+create table if not exists `ship` (
+    `id` integer primary key,
+    `name` varchar(80) unique not null,
+    `cost` integer not null
+);
+
+create table if not exists `incorperation_user` (
+    `incorperation` integer not null,
     `user` integer not null,
-    `market` integer not null,
-    `stake` integer not null, -- how much ownership the user has over the market
+    `stake` integer not null, -- how much ownership the user has over the inc
     foreign key (`user`) references `user` (`id`),
-    foreign key (`market`) references `market` (`id`)
+    foreign key (`stake`) references `stake` (`id`)
 );

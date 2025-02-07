@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }).then(async response => {
             switch (response.status) {
                 case 401:
-                    error.innerText = "username or password does not exist";
+                    error.innerText = "invalid credentials";
                     break;
                 case 400:
                 case 500:
                     error.innerText = "fatal error, try again later";
                     break;
                 default: // 200-300
-                    window.location = '/';
+                    window.location = '/dashboard';
             }
         });
 
