@@ -15,6 +15,7 @@ SETTINGS_PATHS: list[str] = [
     "./settings.json",
     "./etc/settings.json",
     "/etc/void-voyager/settings.json",
+    "/etc/void-voyager-ansible/settings.json",
     "/etc/void-voyager-backend/settings.json",
 ]
 
@@ -22,10 +23,9 @@ SETTINGS_PATHS: list[str] = [
 valid_settings_paths: list[str] = [path for path in SETTINGS_PATHS if isfile(path)]
 
 if not valid_settings_paths:
-    print(" X error: could not locate `settings.json` valid locations are:")
-    for path in SETTINGS_PATHS:
-        print(path)
-    exit(0)
+    raise FileNotFoundError(
+        f"could not locate `settings.json` valid locations are: {SETTINGS_PATHS}"
+    )
 
 settings_path: str = valid_settings_paths[0]
 
@@ -41,29 +41,27 @@ def create_database():
     if db.load_schema(app):
         print(" * database created")
     else:
-        print(" X error: could not find schema file")
+        print(" x error: could not find schema file")
 
 
-@app.cli.command('create-user')
+@app.cli.command("create-user")
 def create_user(username: str = "", password: str = ""):
-
     if not username:
-        username = input('enter username: ')
+        username = input("enter username: ")
 
     if not password:
-        password = getpass('enter password: ')
+        password = getpass("enter password: ")
 
     User.create(app, username, password, False)
 
 
-@app.cli.command('create-admin')
+@app.cli.command("create-admin")
 def create_admin(username: str = "", password: str = ""):
-
     if not username:
-        username = input('enter admin username: ')
+        username = input("enter admin username: ")
 
     if not password:
-        password = getpass('enter admin password: ')
+        password = getpass("enter admin password: ")
 
     User.create(app, username, password, True)
 
@@ -91,18 +89,32 @@ def json_error(status_code: int = 500) -> Response:
     return jsonify({"status": False}), status_code
 
 
+def store_session(pk: int):
+    session["id"] = pk
+
+
+def get_user_id() -> int:
+    return session.get("id")
+
+
+def clear_session() -> bool:
+    if "id" in session:
+        del session["id"]
+    else:
+        return False
+    return "id" in session
+
+
 # --------------------------------------------------------------------------------------
 # API GET requests
 # --------------------------------------------------------------------------------------
-
-
 # query logged in user
 @app.get("/api/account")
 def account() -> Response:
-    if not (userid := session.get("userid")):
+    if not (pk := get_user_id()):
         return json_error(401)  # not logged in
 
-    user: db.User | None = User.get_by_uid(app, userid)
+    user: db.User | None = User.get_by_pk(app, pk)
 
     if not user:
         del session["userid"]  # could not find user for some reason, remove bad ID
@@ -114,8 +126,6 @@ def account() -> Response:
 # --------------------------------------------------------------------------------------
 # API POST requests
 # --------------------------------------------------------------------------------------
-
-
 # create a user row
 @app.post("/api/signup")
 def signup() -> Response:
@@ -126,8 +136,8 @@ def signup() -> Response:
         return json_error(400)
 
     if user := User.create(app, username, password):
-        session["userid"] = user.uid  # login after creation
-        return json_response({"id": user.uid})
+        session["id"] = user.pk  # login after creation
+        return json_response({"id": user.pk})
 
     return json_error(403)  # user already exists
 
@@ -144,7 +154,7 @@ def login() -> Response:
     user: User = User.get_by_username(app, username)
 
     if user and user.password == User.hash(password):
-        session["userid"] = user.uid
+        session["id"] = user.pk
         return json_response()
 
     return json_error(401)
@@ -153,8 +163,7 @@ def login() -> Response:
 # post request to make sure they really intend to log out
 @app.post("/api/logout")
 def logout() -> Response:
-    if "userid" in session:
-        del session["userid"]
+    if clear_session():
         return json_response()
 
     return json_error(500)  # weird if it gets here but whatever
@@ -163,12 +172,11 @@ def logout() -> Response:
 # --------------------------------------------------------------------------------------
 # WEB INTERFACE
 # --------------------------------------------------------------------------------------
-
-
 # static web pages
 @app.get("/")
 @app.get("/<page>")
 def web(page: str = "") -> Response:
+    context: dict[str, Any] = {"data": {}}
     template: str = "index.j2"
 
     match page:
@@ -179,15 +187,15 @@ def web(page: str = "") -> Response:
             template = "signup.j2"
         # authenticated endpoints
         case "logout":  # just render the index but without a user id to query
-            if "userid" in session:
-                del session["userid"]
+            clear_session()
             return redirect("/")
         case "dashboard":  # make sure the user has a session ID before showing them
-            if not session.get("userid"):
+            if not get_user_id():
                 return redirect("/")
+            context["ships"] = {}
             template = "dashboard.j2"
 
-    user: User = User.get_by_uid(app, session.get("userid"))
-    data: dict[str, Any] = user.get_public_data(app) if user else {}
+    if user := User.get_by_pk(app, session.get("id")):
+        context["data"] = user.get_public_data(app)
 
-    return render_template(template, data=data)
+    return render_template(template, **context)

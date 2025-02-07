@@ -7,24 +7,19 @@
 {% block body %}
 <div id="user-page">
     <h2>{{ data["username"] }} <code>{{ data["id"] }}</code></h2>
-
-    <div id="user-actions">
-        <button id="create-group-button">create group</button>
-        <button id="open-market-button">open market</button>
-        <button id="buy-ship-button">buy ship</button>
-    </div>
-
     <div id="user-details">
         <h4><button>[+]</button> ships</h4>
         <ol>
-            {% for ship in ships %}
+            {% for ship in data["ships"] %}
                 <li>{{ ship }}</li>
             {% endfor %}
         </ol>
-        <h4><button>[+]</button> markets</h4>
+    </div>
+    <div id="ship-store">
+        <h4>Buy a ship</h4>
         <ol>
-            {% for market in markets %}
-                <li>{{ market }}</li>
+            {% for ship in ships %}
+                <li>{{ ship }}</li>
             {% endfor %}
         </ol>
     </div>
