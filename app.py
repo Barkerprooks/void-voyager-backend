@@ -66,6 +66,11 @@ def create_admin(username: str = "", password: str = ""):
     User.create(app, username, password, True)
 
 
+@app.cli.command("load-ships")
+def load_ships():
+    print(f" * loaded {db.load_ships(app)} ships")
+
+
 # make sure the database is found and properly closed
 app.teardown_appcontext(db.close_connection)
 

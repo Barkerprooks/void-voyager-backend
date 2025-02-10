@@ -1,0 +1,4 @@
+[
+    { "name": "combat", "cost": 250 },
+    { "name": "trader", "cost": 500 }
+]

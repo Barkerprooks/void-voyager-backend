@@ -3,3 +3,4 @@ env/
 
 # default config paths to ignore
 db/void-voyager.sqlite3
+db/ansible.sqlite3
