@@ -51,7 +51,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
             } else if (option == "sell") {
-                console.log('SOLD!');
+
+                fetch(`/api/user/sell/ship/${formData.get("ship")}`, {
+                    headers: {"Content-Type": "application/json"},
+                    method: "POST"
+                }).then(response => {
+                    window.location.reload();
+                })
+                
             }
         };
     });

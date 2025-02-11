@@ -218,7 +218,7 @@ def sell_ship(ship: int) -> Response:
     if not (pk := get_user_id()):
         return json_error(401)
 
-    user: User = User.get_by_pk(pk)
+    user: User = User.get_by_pk(app, pk)
 
     if user.sell_ship(app, ship):
         return json_response({})

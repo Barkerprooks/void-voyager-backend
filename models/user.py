@@ -15,6 +15,8 @@ class User:
 
     __create: str = "INSERT INTO `user` (`username`, `password`, `is_admin`, `money`) VALUES (?, ?, ?, ?) RETURNING `pk`"
 
+    __edit_money: str = "UPDATE `user` SET `money` = ? WHERE `pk` = ?"
+
     @staticmethod
     def hash(password: str) -> str:
         return sha3_256(password.encode("utf-8")).hexdigest()
@@ -76,21 +78,35 @@ class User:
             ],
         }
 
+    def set_money(self, app: Flask, money: int):
+        connection = db.database(app)
+        value = connection.execute(self.__edit_money, [money, self.pk]).fetchone()
+        connection.commit()
+        return value
+
     def buy_ship(self, app: Flask, pk: int) -> bool:
         ship: Ship = Ship.get_by_pk(app, pk)
 
         if ship and self.money - ship.cost >= 0:
-            self.money -= ship.cost
-            return True if UserShip.create(app, ship.name, self.pk, pk) else False
+            value = self.set_money(app, self.money - ship.cost)
+            return (
+                True
+                if UserShip.create(app, ship.name, self.pk, pk) and value == self.money
+                else False
+            )
 
         return False
 
-    def edit_ship(self, app: Flask, pk: int, name: str):
+    def edit_ship(self, app: Flask, pk: int, name: str) -> bool:
         user_ship: UserShip = UserShip.get_by_pk(app, pk)
         return user_ship.set_name(app, name)
 
-    def sell_ship(self, app: Flask, pk: int):
+    def sell_ship(self, app: Flask, pk: int) -> bool:
+        # give money back to user
+        self.set_money(app, self.money + UserShip.get_by_pk(app, pk).get_type(app).cost)
         UserShip.remove(app, pk)
+
+        return True  # TODO: properly implement this...
 
 
 class UserShip:
@@ -101,6 +117,7 @@ class UserShip:
     __edit_name: str = (
         "UPDATE `user_ship` SET `name` = ? WHERE `pk` = ? RETURNING `name`"
     )
+    __sell_ship: str = "DELETE FROM `user_ship` WHERE `pk` = ?"
 
     @classmethod
     def get_by_pk(cls, app: Flask, pk: int) -> Self | None:
@@ -119,6 +136,12 @@ class UserShip:
         pk = connection.execute(cls.__create, [name, user, ship]).fetchone()[0]
         connection.commit()
         return cls.get_by_pk(app, pk)
+
+    @classmethod
+    def remove(cls, app: Flask, pk: int):
+        connection = db.database(app)
+        connection.execute(cls.__sell_ship, [pk])
+        connection.commit()
 
     def __init__(self, pk: int, name: str, user: int, ship: int):
         self.pk: int = pk
