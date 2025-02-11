@@ -3,7 +3,9 @@ create table if not exists `user` (
     `pk` integer primary key,
     `username` varchar(80) unique,
     `password` varchar(80), -- MAKE SURE TO HASH :)
-    `is_admin` boolean
+    `is_admin` boolean,
+    `money` integer not null
+    -- perhaps later we can make a seperate db entity for pilots and whatnot
 );
 
 -- all ship types that exist
@@ -38,6 +40,7 @@ create table if not exists `good` (
 
 create table if not exists `user_ship` (
     `pk` integer primary key,
+    `name` varchar(80),
     `user` integer not null,
     `ship` integer not null,
     foreign key (`user`) references `user` (`pk`),

@@ -14,3 +14,23 @@
     background: none;
     border: none;
 }
+
+#ship-store {
+    padding: 24px;
+}
+
+.user-ship-options {
+    border: 1px solid black;
+    display: flex;
+    justify-content: space-between;
+    width: 25%;
+    padding: 8px;
+    margin: 4px 0;
+}
+
+.user-ship-options input {
+    cursor: pointer;
+    padding: 8px;
+    height: 100%;
+    margin: 0;
+}

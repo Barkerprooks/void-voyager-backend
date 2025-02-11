@@ -7,7 +7,8 @@ from getpass import getpass
 
 from typing import Any
 
-from models.user import User
+from models.user import User, UserShip
+from models.ship import Ship
 import db
 
 # prefer local first
@@ -174,6 +175,57 @@ def logout() -> Response:
     return json_error(500)  # weird if it gets here but whatever
 
 
+# USER - BUY - SHIPS
+@app.post("/api/user/buy/ship")
+def buy_ship() -> Response:  # buy a personal ship
+    if not (pk := get_user_id()):
+        return json_error(401)  # not authorized to buy ships
+
+    try:
+        ship: str = request.json["ship"]
+    except (KeyError, BadRequest):
+        return json_error(400)
+
+    user: User = User.get_by_pk(app, pk)
+
+    if user.buy_ship(app, ship):
+        return json_response({})
+
+    return json_error()
+
+
+# USER - EDIT - SHIPS
+@app.post("/api/user/edit/ship/<int:ship>")
+def edit_ship(ship: int) -> Response:
+    if not (pk := get_user_id()):
+        return json_error(401)
+
+    try:
+        name: str = request.json["name"]
+    except (KeyError, BadRequest):
+        return json_error(400)
+
+    user: User = User.get_by_pk(app, pk)
+    if user.edit_ship(app, ship, name):
+        return json_response({})
+
+    return json_error()
+
+
+# USER - SELL - SHIPS
+@app.post("/api/user/sell/ship/<int:ship>")
+def sell_ship(ship: int) -> Response:
+    if not (pk := get_user_id()):
+        return json_error(401)
+
+    user: User = User.get_by_pk(pk)
+
+    if user.sell_ship(app, ship):
+        return json_response({})
+
+    return json_error()
+
+
 # --------------------------------------------------------------------------------------
 # WEB INTERFACE
 # --------------------------------------------------------------------------------------
@@ -197,7 +249,7 @@ def web(page: str = "") -> Response:
         case "dashboard":  # make sure the user has a session ID before showing them
             if not get_user_id():
                 return redirect("/")
-            context["ships"] = {}
+            context["ships"] = Ship.get_all_ships(app)
             template = "dashboard.j2"
 
     if user := User.get_by_pk(app, session.get("id")):

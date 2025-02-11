@@ -6,22 +6,41 @@
 
 {% block body %}
 <div id="user-page">
-    <h2>{{ data["username"] }} <code>{{ data["id"] }}</code></h2>
+    <h2>{{ data.username }} [<code>{{ data.id }}</code>] - ${{ data.money }}</h2>
     <div id="user-details">
-        <h4><button>[+]</button> ships</h4>
-        <ol>
+        <h2>ships</h2>
+        {% if data["ships"] %}
             {% for ship in data["ships"] %}
-                <li>{{ ship }}</li>
+            <form class="user-ship-options">
+                <div class="ship-name">
+                    <h4>{{ ship.name }}</h4>
+                    <h6>{{ ship.type.name }}</h6>
+                </div>
+                <input type="hidden" name="ship" value="{{ ship.id }}" />
+                <div class="ship-actions">
+                    <input type="submit" name="option" class="rename" value="rename" />
+                    <input type="submit" name="option" value="sell" />
+                </div>
+            </form>
             {% endfor %}
-        </ol>
+        {% else %}
+            <p>no ships available</p>
+        {% endif %}
     </div>
     <div id="ship-store">
-        <h4>Buy a ship</h4>
-        <ol>
+        <h4>purchase a ship</h4>
+        <form id="buy-ship-form">
+            <select name="ship">
             {% for ship in ships %}
-                <li>{{ ship }}</li>
+                <option value="{{ ship.pk }}">{{ ship.name }} - ${{ ship.cost }}</option>
             {% endfor %}
-        </ol>
+            </select>
+            <input type="submit" value="buy" />
+        </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
 {% endblock %}
